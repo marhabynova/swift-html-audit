@@ -1,0 +1,60 @@
+name: Verify NSAttributedString Outbound Behavior
+
+on: [workflow_dispatch, push]
+
+jobs:
+  verify:
+    runs-on: macos-14
+    steps:
+      - name: Run NSAttributedString HTML Import Test
+        run: |
+          cat << 'EOF' > test.swift
+          import Foundation
+          import AppKit
+
+          let webhookBase = "https://webhook.site/82a37483-e4e2-4e58-a8ad-57242da47723"
+          let testHTML = """
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <link rel="stylesheet" href="\(webhookBase)/canary-style.css">
+          </head>
+          <body>
+              <h1>Test Headline</h1>
+              <p>Testing in-process WebCore HTML parsing.</p>
+              <img src="\(webhookBase)/canary-img.png" alt="tracker">
+          </body>
+          </html>
+          """
+
+          print("[*] Starting NSAttributedString test on macOS runner...")
+          print("[*] Target Webhook: \(webhookBase)")
+
+          let data = Data(testHTML.utf8)
+          let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+              .documentType: NSAttributedString.DocumentType.html,
+              .characterEncoding: String.Encoding.utf8.rawValue
+          ]
+
+          let startTime = Date()
+          let attributedString = try? NSAttributedString(
+              data: data,
+              options: options,
+              documentAttributes: nil
+          )
+          let duration = Date().timeIntervalSince(startTime)
+
+          print("[+] Parsing completed in \(duration) seconds")
+          if let attr = attributedString {
+              print("[+] AttributedString Length: \(attr.length)")
+              print("[+] AttributedString Plaintext: \(attr.string.replacingOccurrences(of: "\n", with: " "))")
+          } else {
+              print("[-] NSAttributedString returned nil")
+          }
+
+          // Wait 5 seconds to ensure async background tasks finish if any
+          Thread.sleep(forTimeInterval: 5.0)
+          print("[*] Execution finished.")
+          EOF
+
+          swift test.swift
