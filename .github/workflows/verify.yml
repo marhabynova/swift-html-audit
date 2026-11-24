@@ -4,7 +4,7 @@ on: [workflow_dispatch, push]
 
 jobs:
   verify:
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - name: Run NSAttributedString HTML Import Test
         run: |
@@ -27,7 +27,7 @@ jobs:
           </html>
           """
 
-          print("[*] Starting NSAttributedString test on Apple Silicon macOS runner...")
+          print("[*] Starting NSAttributedString test on Apple macOS runner...")
           print("[*] Target Webhook: \(webhookBase)")
 
           let data = Data(testHTML.utf8)
